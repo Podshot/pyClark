@@ -1,8 +1,11 @@
 import sys
 import json
 import types
-import requests
 import logging
+import platform
+
+import requests
+
 from . import utils
 
 logger = logging.getLogger(__name__)
@@ -44,7 +47,7 @@ class Clark(object):
             'locals': {name: try_dump(data) for name, data in lcls.items()},
             'globals': {name: try_dump(data) for name, data in glbls.items()},
             'stack-trace': error,
-            'os': ''
+            'os': platform.platform()
         }
         report = json.loads(utils.anonymize(json.dumps(report)))
         self._send(report)
