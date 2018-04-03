@@ -2,3 +2,4 @@ requests
 pygithub
 tornado
 SQLAlchemy
+psycopg2
