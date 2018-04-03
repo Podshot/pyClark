@@ -1,0 +1,60 @@
+<html>
+    {% from datetime import datetime %}
+    {% import time %}
+    <head>
+        <title>MCEdit-Unified Error Report Page</title>
+        <!--<style>
+            table {
+                border-collapse: collapse;
+                border-spacing: 0;
+                width: 100%;
+                border: 1px solid #ddd;
+            }
+
+            th, td {
+                text-align: left;
+                padding: 8px;
+            }
+
+            tr:nth-child(even){
+                background-color: #f2f2f2
+            }
+        </style> -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    </head>
+    <body>
+        <script src="./static/table_sort.js"></script>
+        <div class="container">
+            <div class="table-responsive">
+                <table id="report-table" class="table table-hover table-bordered table-striped">
+                    <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">Report Time</th>
+                        <th onclick="sortTable(1)">ID</th>
+                        <th onclick="sortTable(2)">Operating System</th>
+                        <th onclick="sortTable(3)">File</th>
+                        <th onclick="sortTable(4)">Exception</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for report in reports %}
+                        <tr>
+                        {% for field in fields %}
+                            {% if field == 'report_time' %}
+                                <td>{{ time.ctime(report[field]) }}</td>
+                            {% elif field == 'report_id' %}
+                                <td><a href="/error/{{ report[field] }}">{{ report[field] }}</a></td>
+                            {% else %}
+                                <td>{{ report[field] }}</td>
+                            {% end %}
+                        {% end %}
+                        </tr>
+                    {% end %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </body>
+</html>
