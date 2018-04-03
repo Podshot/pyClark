@@ -3,3 +3,4 @@ pygithub
 tornado
 SQLAlchemy
 psycopg2
+pycurl
