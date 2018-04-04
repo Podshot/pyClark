@@ -105,3 +105,11 @@ venv.bak/
 
 # PyCharm
 .idea/
+
+# Extra
+config.json
+pyClark
+setup.py
+*.db
+report_test.py
+non-public/

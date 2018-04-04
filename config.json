@@ -1,6 +1,0 @@
-{
-  "port": 80,
-  "allowed_users": "",
-  "public_reports": false,
-  "cookie_secret": "<enter your cookie secret>"
-}

@@ -38,6 +38,8 @@ class ErrorReport(Base):
     report_time = Column(Integer)
     os = Column(String)
     stacktrace = Column(String)
+    local_variables = Column(String)
+    global_variables = Column(String)
     
     def __init__(self, *args, **kwargs):
         super(ErrorReport, self).__init__(*args, **kwargs)
@@ -66,12 +68,10 @@ class BaseHandler(tornado.web.RequestHandler):
 
     def get_current_user(self):
         username = self.get_secure_cookie('user')
-        print(username)
         if not username:
             return None
         username = username.decode('utf-8')
         if username in ALLOWED_USERS:
-            print('is allowed')
             return self.get_secure_cookie('user')
         else:
             self.clear_cookie('user')
@@ -95,7 +95,10 @@ class IndexPageHandler(tornado.web.RequestHandler):
     def get(self):
         #self.write('Test page')
         #self.flush()
-        self.render('index.html', reports=self.collect_reports(), fields=('report_time', 'report_id', 'os', 'filename', 'exception'))
+        self.render(
+            'index.html',
+            reports=self.collect_reports(),
+            fields=('report_time', 'report_id', 'os', 'filename', 'exception'))
 
 class LoginHandler(tornado.web.RequestHandler):
 
@@ -121,6 +124,7 @@ class ReportErrorPage(tornado.web.RequestHandler):
         stacktrace = self.get_argument('stack-trace')
         local_vars = self.get_argument('locals')
         global_vars = self.get_argument('globals')
+        print(local_vars)
         report_uuid = str(uuid.uuid4())
 
         stacktrace = re.sub(r'([A-Z]{1}\:/[Uu]sers/)([^/]*)', '<user>', stacktrace)
@@ -131,7 +135,9 @@ class ReportErrorPage(tornado.web.RequestHandler):
             report_id=report_uuid,
             report_time=time.time(),
             os=os,
-            stacktrace=stacktrace
+            stacktrace=stacktrace,
+            local_variables=local_vars,
+            global_variables=global_vars
         )
         session.add(report)
         session.commit()
@@ -143,13 +149,36 @@ class ReportErrorPage(tornado.web.RequestHandler):
 
 class ReportDetailPage(BaseHandler):
 
+    def preprocess(self, d):
+        result = {}
+        for key, value in d.items():
+            typed, data = value.split(':', 1)
+            typed, data = typed.replace('type=', '').strip(), data.replace('data=', '').strip()
+            result[key] = {
+                "type": typed[8:-2],
+                "data": json.loads(data)
+            }
+        return result
+
     def get(self, *args, **kwargs):
         if not self.get_current_user() and not PUBLIC_REPORTS:
             self.redirect('/login')
             return
         report_id = args[0]
         report = session.query(ErrorReport).filter(ErrorReport.report_id == report_id).first()
-        self.render('error_details.html', report=report, section=self.get_query_argument('section', 'summary'), can_delete=(self.get_current_user() is not None))
+
+        l_vars = json.loads(report.local_variables)
+        local_vars = self.preprocess(l_vars)
+
+        formatted = json.dumps(local_vars, indent=4, separators=(',', ':'))
+
+
+        self.render(
+            'error_details.html',
+            report=report,
+            can_delete=(self.get_current_user() is not None),
+            local_variables=formatted
+        )
 
 class DeleteReportHandler(BaseHandler):
 
