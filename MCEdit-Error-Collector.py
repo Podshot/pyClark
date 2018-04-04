@@ -153,11 +153,16 @@ class ReportDetailPage(BaseHandler):
         result = {}
         for key, value in d.items():
             typed, data = value.split(':', 1)
-            typed, data = typed.replace('type=', '').strip(), data.replace('data=', '').strip()
-            result[key] = {
-                "type": typed[8:-2],
-                "data": json.loads(data)
-            }
+            if typed.strip() == 'type=module':
+                result[key] = 'module'
+            else:
+                typed, data = typed.replace('type=', '').strip(), data.replace('data=', '').strip()
+                if data == 'Unknown':
+                    data = '{}'
+                result[key] = {
+                    "type": typed[8:-2],
+                    "data": json.loads(data)
+                }
         return result
 
     def get(self, *args, **kwargs):
@@ -170,14 +175,20 @@ class ReportDetailPage(BaseHandler):
         l_vars = json.loads(report.local_variables)
         local_vars = self.preprocess(l_vars)
 
-        formatted = json.dumps(local_vars, indent=4, separators=(',', ':'))
+        locals_formatted = json.dumps(local_vars, indent=4, separators=(',', ':'))
+
+        g_vars = json.loads(report.global_variables)
+        global_vars = self.preprocess(g_vars)
+
+        globals_formatted = json.dumps(global_vars, indent=4, separators=(',', ':'))
 
 
         self.render(
             'error_details.html',
             report=report,
             can_delete=(self.get_current_user() is not None),
-            local_variables=formatted
+            local_variables=locals_formatted,
+            global_variables=globals_formatted
         )
 
 class DeleteReportHandler(BaseHandler):
