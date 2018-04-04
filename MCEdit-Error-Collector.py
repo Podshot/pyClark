@@ -13,12 +13,20 @@ import os
 import uuid
 import atexit
 import re
+import json
 
 from tornado.httpclient import AsyncHTTPClient
 
-LISTEN_PORT = int(os.environ.get('PORT', 80))
-ALLOWED_USERS = os.environ.get('USERS', '').split(',')
-PUBLIC_VIEW = False
+CONFIG = {}
+if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')):
+    fp = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json'), 'rb')
+    CONFIG = json.load(fp)
+    fp.close()
+
+
+LISTEN_PORT = int(os.environ.get('PORT', CONFIG.get('port', 80)))
+ALLOWED_USERS = os.environ.get('USERS', CONFIG.get('allowed_users', '')).split(',')
+PUBLIC_REPORTS = os.environ.get('PUBLIC_REPORTS', CONFIG.get('public_reports'))
 
 db_path = os.environ.get('DATABASE_URL', 'sqlite:////' + os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.db').replace('\\', '/').replace('C:/', ''))
 engine = create_engine(db_path)
@@ -49,19 +57,21 @@ atexit.register(session.close)
 SETTINGS = {
     "template_path": os.path.join(os.path.dirname(__file__), 'templates'),
     "static_path": os.path.join(os.path.dirname(__file__), 'static'),
-    "cookie_secret": os.environ.get('COOKIE_SECRET', '<enter in your own secret cookie>'),
+    "cookie_secret": os.environ.get('COOKIE_SECRET', CONFIG.get('cookie_secret', '<enter your cookie secret>')),
     "login_url": '/login',
-    'debug': True
+    'debug': False
 }
 
 class BaseHandler(tornado.web.RequestHandler):
 
     def get_current_user(self):
         username = self.get_secure_cookie('user')
+        print(username)
         if not username:
             return None
         username = username.decode('utf-8')
         if username in ALLOWED_USERS:
+            print('is allowed')
             return self.get_secure_cookie('user')
         else:
             self.clear_cookie('user')
@@ -134,7 +144,7 @@ class ReportErrorPage(tornado.web.RequestHandler):
 class ReportDetailPage(BaseHandler):
 
     def get(self, *args, **kwargs):
-        if not self.get_current_user() and not PUBLIC_VIEW:
+        if not self.get_current_user() and not PUBLIC_REPORTS:
             self.redirect('/login')
             return
         report_id = args[0]

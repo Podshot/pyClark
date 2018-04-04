@@ -4,53 +4,66 @@
 <head>
     <meta charset="UTF-8">
     <title>Error Details</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-
 </head>
 <body>
     <div class="container-fluid">
         <div class="row content">
             <div class="col-sm-3 sidenav hidden-xs">
                 <ul class="nav nav-pills nav-stacked">
-                    <li class="active"><a href="?section=summary">Summary</a></li>
-                    <li><a href="?section=log">Full Log</a></li>
-                    <li><a href="?section=stacktrace">Stack Trace</a></li>
-                    <li><a href="?section=var-dumb">Variable Dump</a></li>
+
+                    <li class="active"><a data-toggle="pill" href="#summary">Summary</a></li>
+                    <li><a data-toggle="pill" href="#log">Full Log</a></li>
+                    <li><a data-toggle="pill" href="#stacktrace">Stack Trace</a></li>
+                    <li><a data-toggle="pill" href="#var-dump">Variable Dump</a></li>
                     <!--<li><a href="/remove-report?id={{ report.report_id }}">Remove Report</a></li>-->
                     {% if can_delete %}
                     <li><a href="javascript:confirmDelete()">Remove Report</a></li>
                     {% end %}
                 </ul><br>
             </div>
-            <div class="col-sm-9">
-                <div class="well">
-                    <h4><b>Error ID:</b> {{ report.report_id }}</h4>
-                    <p><b>Report Date:</b> {{ time.ctime(report.report_time) }}</p>
-                </div>
-                {% if section == 'summary' %}
-                <div class="row">
-                    <div class="col-sm-3">
+            <div class="tab-content">
+                <div id="summary" class="tab-pane fade in active">
+                    <div class="col-sm-9">
                         <div class="well">
-                            <h4><b>Operating System:</b> {{ report.os.capitalize() }}</h4>
+                            <h4><b>Error ID:</b> {{ report.report_id }}</h4>
+                            <p><b>Report Date:</b> {{ time.ctime(report.report_time) }}</p>
                         </div>
                     </div>
-                     <div class="col-sm-3">
-                         <div class="well">
-                             <h4><b>MCEdit Version:</b> {{ getattr(report, 'version', '1.5.6.0') }}</h4>
-                         </div>
-                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-sm-1"></div>
-                    <div class="col-sm-10">
-                        <div class="well">
-                            <pre>{{ report.stacktrace }}</pre>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div class="well">
+                                <h4><b>Operating System:</b> {{ report.os.capitalize() }}</h4>
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="well">
+                                <h4><b>MCEdit Version:</b> {{ getattr(report, 'version', '1.5.6.0') }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-3"></div>
+                        <div class="col-sm-9">
+                            <div class="well">
+                                <pre>{{ report.stacktrace }}</pre>
+                            </div>
                         </div>
                     </div>
                 </div>
-                {% end %}
+                <!--</div>-->
+                <div id="log" class="tab-pane fade">
+                    <p>test</p>
+                </div>
+                <div id="var-dump" class="tab-pane fade">
+                    <div class="col-sm-9">
+                        <div class="well">
+                            <h4><b>Local Variables:</b></h4>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
