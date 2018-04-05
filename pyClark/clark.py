@@ -29,17 +29,32 @@ class Clark(object):
 
     def report(self, error, *args, **kwargs):
 
+        def can_serialize(value):
+            try:
+                json.dumps({'var': value})
+                return True
+            except:
+                return False
+
         def try_dump(obj):
             if isinstance(obj, types.ModuleType):
-                return obj.__name__
+                return {'type': 'module', 'name': obj.__name__}
             t = str(type(obj))
+            data = {
+                'type': t,
+                'data': 'Unknown'
+            }
             try:
-                return "type={} : data={}".format(t, json.dumps(obj))
+                data['data'] = {}
+                for k, v in obj.__dict__.items():
+                    if can_serialize(v) and not hasattr(obj, 'dont_serialize'):
+                        data['data'][k] = v
             except Exception as e:
                 try:
-                    return "type={} : data={}".format(t, json.dumps(obj.__dict__))
+                    data['data'] = obj.__dict__
                 except:
-                    return "type={} : data=Unknown".format(t)
+                    pass
+            return data
 
         lcls = kwargs.get('locals', {})
         glbls = kwargs.get('globals', {})
@@ -49,12 +64,12 @@ class Clark(object):
             'stack-trace': error,
             'os': platform.platform()
         }
-        report = json.loads(utils.anonymize(json.dumps(report)))
+        report = utils.anonymize(json.dumps(report))
         self._send(report)
 
     def _send(self, report_dict):
         try:
-            reply = requests.post('{}/{}'.format(self._hostname, self._post_endpoint), data=report_dict)
+            reply = requests.post('{}/{}'.format(self._hostname, self._post_endpoint), data={'info': report_dict})
         except Exception as e:
             logger.error(e)
             logger.critical('Could not send error report')
