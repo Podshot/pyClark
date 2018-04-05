@@ -120,10 +120,16 @@ class LoginHandler(tornado.web.RequestHandler):
 class ReportErrorPage(tornado.web.RequestHandler):
 
     def post(self, *args, **kwargs):
-        os = self.get_argument('os')
-        stacktrace = self.get_argument('stack-trace')
-        local_vars = self.get_argument('locals')
-        global_vars = self.get_argument('globals')
+        info = self.get_argument('info')
+        #os = self.get_argument('os')
+        #stacktrace = self.get_argument('stack-trace')
+        #local_vars = self.get_argument('locals')
+        #global_vars = self.get_argument('globals')
+        info = json.loads(info)
+        os = info['os']
+        stacktrace = info['stack-trace']
+        local_vars = info['locals']
+        global_vars = info['globals']
         print(local_vars)
         report_uuid = str(uuid.uuid4())
 
@@ -136,8 +142,8 @@ class ReportErrorPage(tornado.web.RequestHandler):
             report_time=time.time(),
             os=os,
             stacktrace=stacktrace,
-            local_variables=local_vars,
-            global_variables=global_vars
+            local_variables=json.dumps(local_vars),
+            global_variables=json.dumps(global_vars)
         )
         session.add(report)
         session.commit()
@@ -174,12 +180,14 @@ class ReportDetailPage(BaseHandler):
 
         print('locals', report.local_variables)
         l_vars = json.loads(report.local_variables)
-        local_vars = self.preprocess(l_vars)
+        #local_vars = self.preprocess(l_vars)
+        local_vars = l_vars
 
         locals_formatted = json.dumps(local_vars, indent=4, separators=(',', ':'))
 
         g_vars = json.loads(report.global_variables)
-        global_vars = self.preprocess(g_vars)
+        #global_vars = self.preprocess(g_vars)
+        global_vars = g_vars
 
         globals_formatted = json.dumps(global_vars, indent=4, separators=(',', ':'))
 
