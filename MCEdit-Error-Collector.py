@@ -172,6 +172,7 @@ class ReportDetailPage(BaseHandler):
         report_id = args[0]
         report = session.query(ErrorReport).filter(ErrorReport.report_id == report_id).first()
 
+        print('locals', report.local_variables)
         l_vars = json.loads(report.local_variables)
         local_vars = self.preprocess(l_vars)
 
