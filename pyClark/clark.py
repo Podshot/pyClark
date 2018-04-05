@@ -22,7 +22,7 @@ class Clark(object):
             setattr(module, 'global_clark', self)
             self.__class__._already_injected = True
         elif inject:
-            logger.warning('A Clark object has already injected into the builtins module')
+            logger.warning('A Clark object has already injected into the module')
         self._post_endpoint = kwargs.get('post_endpoint', 'report-error')
         self._show_report_id = kwargs.get('show_report_id', True)
         self._allow_logging = kwargs.get('allow_logging', True)
@@ -64,6 +64,6 @@ class Clark(object):
                 if self._show_report_id:
                     logger.info('Successfully sent error report. Report ID: {}'.format(reply.json()['id']))
                 else:
-                    logger.info('Sucessfully sent error report')
+                    logger.info('Successfully sent error report')
             else:
                 logger.warning("Report was not sent successfully, code: {} reason: {}".format(reply.status_code, reply.reason))
