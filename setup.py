@@ -7,7 +7,7 @@ setup(
     version=pyClark.__version__,
     packages=['pyClark',],
     license='GNU LGPLv3',
-    description='Remote error reporting and logging for saving the day',
+    description='Remote error reporting that helps save the day',
     author='Podshot',
     install_requires=['requests'],
     classifiers=[
