@@ -1,5 +1,6 @@
 import sys
 import json
+import traceback
 import types
 import logging
 import platform
@@ -15,6 +16,10 @@ class Clark(object):
     _already_injected = False
     _object_serializers = {}
 
+    @classmethod
+    def add_serializer(cls, clazz):
+        cls._object_serializers[clazz.serialize_type] = clazz()
+
     def __init__(self, hostname, inject=False, **kwargs):
         self._hostname = hostname
         if inject and not self._already_injected:
@@ -27,9 +32,13 @@ class Clark(object):
         self._show_report_id = kwargs.get('show_report_id', True)
         self._allow_logging = kwargs.get('allow_logging', True)
 
-    def report(self, error, *args, **kwargs):
+    def report(self, error=None, *args, **kwargs):
+        if not error:
+            error = ''.join(traceback.format_exception(*sys.exc_info()))
 
         def can_serialize(value):
+            if type(value) in self._object_serializers:
+                value = self._object_serializers[type(value)].serialize(value)
             try:
                 json.dumps({'var': value})
                 return True
@@ -47,12 +56,13 @@ class Clark(object):
             try:
                 data['data'] = {}
                 for k, v in obj.__dict__.items():
-                    if can_serialize(v) and not hasattr(obj, 'dont_serialize'):
+                    if not can_serialize(v):
+                        continue
+                    if not (hasattr(obj, 'dont_serialize') or type(v) in self._object_serializers):
                         data['data'][k] = v
+                    elif not hasattr(obj, 'dont_serialize') and type(v) in self._object_serializers:
+                        data['data'][k] = self._object_serializers[type(v)].serialize(v)
             except Exception as e:
-                try:
-                    data['data'] = obj.__dict__
-                except:
                     pass
             return data
 
