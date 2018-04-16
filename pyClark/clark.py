@@ -31,6 +31,7 @@ class Clark(object):
         self._post_endpoint = kwargs.get('post_endpoint', 'report-error')
         self._show_report_id = kwargs.get('show_report_id', True)
         self._allow_logging = kwargs.get('allow_logging', True)
+        self._timeout = kwargs.get('timeout', 8)
 
     def report(self, error=None, *args, **kwargs):
         if not error:
@@ -79,7 +80,7 @@ class Clark(object):
 
     def _send(self, report_dict):
         try:
-            reply = requests.post('{}/{}'.format(self._hostname, self._post_endpoint), data={'info': report_dict})
+            reply = requests.post('{}/{}'.format(self._hostname, self._post_endpoint), data={'info': report_dict}, timeout=self._timeout)
         except Exception as e:
             logger.error(e)
             logger.critical('Could not send error report')
