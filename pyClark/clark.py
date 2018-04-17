@@ -1,9 +1,11 @@
 import sys
 import json
+import threading
 import traceback
 import types
 import logging
 import platform
+import atexit
 
 import requests
 
@@ -11,10 +13,30 @@ from . import utils
 
 logger = logging.getLogger(__name__)
 
+def stop_all_threads():
+    for thread in Clark._threads:
+        thread.stop()
+        thread.join()
+
+atexit.register(stop_all_threads)
+
+class SendReportThread(threading.Thread):
+
+    def __init__(self, *args, **kwargs):
+        super(SendReportThread, self).__init__(*args, **kwargs)
+        self._stop_evt = threading.Event()
+
+    def stop(self):
+        self._stop_evt.set()
+
+    def stopped(self):
+        return self._stop_evt.is_set()
+
 class Clark(object):
 
     _already_injected = False
     _object_serializers = {}
+    _threads = []
 
     @classmethod
     def add_serializer(cls, clazz):
@@ -76,11 +98,28 @@ class Clark(object):
             'os': platform.platform()
         }
         report = utils.anonymize(json.dumps(report))
-        self._send(report)
+
+        proc = SendReportThread(target=self._send, args=(report,))
+        proc.daemon = True
+        self._threads.append(proc)
+        proc.start()
+
+        proc.join(self._timeout)
+
+        if proc.is_alive():
+            proc.stop()
+            proc.join()
+
+        self._threads.remove(proc)
+        #self._send(report)
 
     def _send(self, report_dict):
         try:
             reply = requests.post('{}/{}'.format(self._hostname, self._post_endpoint), data={'info': report_dict}, timeout=self._timeout)
+        except requests.exceptions.Timeout:
+            logger.critical('Could not send error report')
+            logger.warning('Request timed out. Timeout = {}'.format(self._timeout))
+            return
         except Exception as e:
             logger.error(e)
             logger.critical('Could not send error report')
